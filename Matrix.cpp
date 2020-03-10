@@ -1,19 +1,22 @@
 #include "Matrix.h"
 #include <iostream>
 #include <utility>
+#include <iomanip> 
 
 using namespace std; 
 
 
 //Konstruerer en rows x cols dim matrise
-Matrix::Matrix(int row, int col, double val) : rows{row}, cols{col}
+Matrix::Matrix(int row, int col, double val)
 {
-    matrix = new double*[rows];
-    for(int i = 0; i < rows; i++)
+    rows = new int(row);
+    cols = new int(col);
+    matrix = new double*[*rows];
+    for(int i = 0; i < *rows; i++)
     {
-        matrix[i] = new double[cols];
+        matrix[i] = new double[*cols];
 
-        for(int j = 0; j < cols; j++)
+        for(int j = 0; j < *cols; j++)
         {
             matrix[i][j] = val; 
         }
@@ -21,11 +24,17 @@ Matrix::Matrix(int row, int col, double val) : rows{row}, cols{col}
 }
 
 //Konstruerer en "ugyldig matrise"
-Matrix::Matrix() : rows{0}, cols{0}, matrix{nullptr} {}
+Matrix::Matrix() : matrix{nullptr} 
+{
+    rows = new int(0);
+    cols = new int(0);
+}
+
+
 
 //Konstruerer en identitesmatrise
 Matrix::Matrix(int nRows) : Matrix{nRows, nRows}
-{
+{   
     for(int i = 0; i < nRows; i++)
     {
         matrix[i][i] = 1; 
@@ -36,15 +45,19 @@ Matrix::Matrix(int nRows) : Matrix{nRows, nRows}
 //Frigjør minne allokert i konstruktøren 
 Matrix::~Matrix()
 {
+    
     if (this->isValid()==true)
     {
-        for (int i = 0; i < rows; i++)
+        for (int j = 0; j < *rows; j++)
         {
-            delete[] matrix[i];
-            matrix[i] = nullptr;
+            delete[] matrix[j];
+            matrix[j] = nullptr;
         }
+
         delete[] matrix; 
         matrix = nullptr;
+        delete rows; 
+        delete cols;
     }   
 }
 
@@ -76,39 +89,21 @@ void Matrix::printMemLoc() const
     cout << matrix;
 }
 
-//Enkel test som tester at alle tre konstruktørene fungerer slik de skal
-void testMatrixClass()
-{
-    Matrix A{8,7};
-    Matrix B{5};
-    Matrix C{};
-    Matrix D{C};
-    Matrix E{};
-    E=B; 
-    
-    cout << E;
-    
-    E.printMemLoc();
-    cout << endl; 
-    B.printMemLoc();    
-}
-
-
 //Dyp kopiering av eksisterende matrise, allokerer nytt minne. 
 Matrix::Matrix(const Matrix& rhs)
 {  
     if (rhs.isValid() == true)
     {   
-        rows = rhs.rows; 
-        cols = rhs.cols;
-        matrix = new double*[rows];
+        rows = new int(*rhs.rows); 
+        cols = new int (*rhs.cols);
+        matrix = new double*[*rows];
 
-        for (int i = 0; i<rows; i++)
+        for (int i = 0; i<*rows; i++)
         {
-            matrix[i] = new double[cols];
-            for(int j = 0; j<cols; j++)
+            matrix[i] = new double[*cols];
+            for(int j = 0; j<*cols; j++)
             {
-                this->matrix[i][j] = rhs.matrix[i][j];
+                matrix[i][j] = rhs.matrix[i][j];
             }
         }
     }
@@ -129,3 +124,43 @@ Matrix& Matrix::operator=(Matrix rhs)
 }
 
 
+
+Matrix& Matrix::operator+=(Matrix rhs)
+{
+    if (!(*cols == *rhs.cols && *rows == *rhs.rows))
+    {
+       return *this = Matrix{};
+    }
+    else
+    {
+        for (int i = 0; i<*rows; i++)
+        {
+            for (int j = 0; j<*cols; j++)
+            {
+                matrix[i][j] += rhs.matrix[i][j];
+            }
+        }
+        return *this;
+    }
+}
+
+Matrix Matrix::operator+(Matrix rhs)
+{
+    if (!(*cols == *rhs.cols && *rows == *rhs.rows))
+    {
+       Matrix product{};
+       return product; 
+    }
+    else
+    {
+        Matrix product{*rows, *cols};
+         for (int i = 0; i<*rows; i++)
+        {
+            for (int j = 0; j<*cols; j++)
+            {
+                product.matrix[i][j] = matrix[i][j] + rhs.matrix[i][j];
+            }
+        }
+        return product;
+    }
+}
